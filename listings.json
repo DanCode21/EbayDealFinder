@@ -2,6 +2,6 @@
     {"title": "Wireless Mouse", "price": 150.99, "shipping": 5.00, "condition": "New"},
     {"title": "Bluetooth Headphones", "price": 45.00, "shipping": 10.00, "condition": "New"},
     {"title": "GPU RTX 4090", "price": 1100.99, "shipping": 2.00, "condition": "New"},
-    {"title": "GPU Nvidea RTX 3070", "price": 499.99, "shipping": 12.00, "condition": "New"},
+    {"title": "GPU Nvidia RTX 3070", "price": 499.99, "shipping": 12.00, "condition": "New"},
     {"title": "GPU amd rx6700xt", "price": 300.00, "shipping": 20.00, "condition": "New"}
 ]
