@@ -1,5 +1,7 @@
 import json
 
+from ebay_api import search_items
+
 # User input for search query and maximum price
 def get_user_input():
     search_query = input("What are you looking for? ")
@@ -10,7 +12,7 @@ def get_user_input():
         except ValueError:
             print("Please enter a valid number for the maximum price.")
     search_words = search_query.lower().split()
-    return search_words, max_price
+    return search_query, search_words, max_price
 
 def calculate_total(listing):
     total_price = listing['price'] + listing['shipping'] 
@@ -28,6 +30,8 @@ def print_listing(listing):
         print("No valid listing to print.")
         return
     print(f"Listing Details: Title: {listing['title']}, Price: ${listing['price']:.2f}, Shipping: ${listing['shipping']:.2f}, Condition: {listing['condition']}")
+    if listing.get("url"):
+        print(f"URL: {listing['url']}")
 
 def get_cheapest_listing(listings, search_words, max_price):
     cheapest_price = float('inf') # set cheapest price to infinity
@@ -56,15 +60,22 @@ def get_cheapest_listing(listings, search_words, max_price):
 
 
 def main():
-    #load listings from json file:
-    with open("listings.json", 'r') as file:
-        listings = json.load(file)
-
     print("Program started")
-    search_words, max_price = get_user_input()
+    search_query, search_words, max_price = get_user_input()
+
+    try:
+        listings = search_items(search_query)
+        print(f"Loaded {len(listings)} live listings from eBay.")
+    except Exception as error:
+        print(f"Could not load live eBay listings: {error}")
+        print("Using local listings.json sample data instead.")
+        with open("listings.json", 'r') as file:
+            listings = json.load(file)
+
     cheapest_listing = get_cheapest_listing(listings, search_words, max_price)  # Should find the GPU listing
     print_listing(cheapest_listing)
-    print(f"Cheapest listing found: {cheapest_listing['title']} \nTotal: ${calculate_total(cheapest_listing):.2f}")  # Debug print to show the cheapest listing found
+    if cheapest_listing is not None:
+        print(f"Cheapest listing found: {cheapest_listing['title']} \nTotal: ${calculate_total(cheapest_listing):.2f}")  # Debug print to show the cheapest listing found
     print("Program ended")
     # print("Testing calculate_total, expected output: 20.99")
     # print(calculate_total(listings[0]))  # Should return 20.99
