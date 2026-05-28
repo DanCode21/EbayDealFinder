@@ -29,7 +29,7 @@ def print_listing(listing):
     if listing is None:
         print("No valid listing to print.")
         return
-    print(f"Listing Details: Title: {listing['title']}, Price: ${listing['price']:.2f}, Shipping: ${listing['shipping']:.2f}, Condition: {listing['condition']}")
+    print(f"\nListing Details: Title: {listing['title']} \nPrice: ${listing['price']:.2f} \nShipping: ${listing['shipping']:.2f} \nCondition: {listing['condition']}")
     if listing.get("url"):
         print(f"URL: {listing['url']}")
 
@@ -42,25 +42,16 @@ def get_cheapest_listing(listings, search_words, max_price):
     for listing in listings:   # go through each listing, match search? yes -> match price? yes -> 
         print(f"Checking listing: {listing['title']} with price ${listing['price']:.2f} and shipping ${listing['shipping']:.2f}")  # Debug print
         if(search_match(listing, search_words) and price_match(listing, max_price)):
-            print("CONDITION MET: within price and search words")
             if calculate_total(listing) < cheapest_price:
                 cheapest_price = calculate_total(listing) #lower than cheapest price? -> update cheapest price
-                print(f"Updated cheapest price to {cheapest_price}")
                 cheapest_listing = listing        # and cheapest listing
-                print(f"Updated cheapest listing to {cheapest_listing}")
-            else:
-                print(f"Did not update cheapest listing, current cheapest price is {cheapest_price} and listing total is {calculate_total(listing)}")
-        else:
-            print("CONDITION NOT MET: either price or search words do not match")
             
     print("DEBUG cheapest_listing =", cheapest_listing)
-    print("DEBUG type =", type(cheapest_listing))
     return cheapest_listing
 
 
 
 def main():
-    print("Program started")
     search_query, search_words, max_price = get_user_input()
 
     try:
@@ -76,7 +67,6 @@ def main():
     print_listing(cheapest_listing)
     if cheapest_listing is not None:
         print(f"Cheapest listing found: {cheapest_listing['title']} \nTotal: ${calculate_total(cheapest_listing):.2f}")  # Debug print to show the cheapest listing found
-    print("Program ended")
     # print("Testing calculate_total, expected output: 20.99")
     # print(calculate_total(listings[0]))  # Should return 20.99
     # print("Testing search_match, expected output: True")

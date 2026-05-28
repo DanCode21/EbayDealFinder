@@ -7,8 +7,8 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 
-TOKEN_URL = "https://api.sandbox.ebay.com/identity/v1/oauth2/token"
-BROWSE_SEARCH_URL = "https://api.sandbox.ebay.com/buy/browse/v1/item_summary/search"
+TOKEN_URL = "https://api.ebay.com/identity/v1/oauth2/token"
+BROWSE_SEARCH_URL = "https://api.ebay.com/buy/browse/v1/item_summary/search"
 DEFAULT_SCOPE = "https://api.ebay.com/oauth/api_scope"
 
 
