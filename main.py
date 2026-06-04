@@ -29,7 +29,8 @@ def print_listing(listing):
     if listing is None:
         print("No valid listing to print.")
         return
-    print(f"\nListing Details: Title: {listing['title']} \nPrice: ${listing['price']:.2f} \nShipping: ${listing['shipping']:.2f} \nCondition: {listing['condition']}")
+    currency = listing.get("price_currency") or "CAD"
+    print(f"\nListing Details: Title: {listing['title']} \nPrice: ${listing['price']:.2f} {currency} \nShipping: ${listing['shipping']:.2f} \nCondition: {listing['condition']}")
     if listing.get("url"):
         print(f"URL: {listing['url']}")
 
@@ -49,7 +50,20 @@ def get_cheapest_listing(listings, search_words, max_price):
     print("DEBUG cheapest_listing =", cheapest_listing)
     return cheapest_listing
 
+def get_n_cheapest_listings(listings, search_words, max_price, n=None):
+    if n is None:
+        while True:
+            try:
+                n = int(input("How many other listings do you want to see? (Enter a number, or press Enter to skip) "))
+                break
+            except ValueError:
+                print("Please enter a valid number.")
+    valid_listings = [listing for listing in listings if search_match(listing, search_words) and price_match(listing, max_price)]
+    sorted_listings = sorted(valid_listings, key=calculate_total)
+    return sorted_listings[:n]
 
+def ignore_broken(listings):
+    return [listing for listing in listings if listing.get('title') and listing.get('price') is not None]
 
 def main():
     search_query, search_words, max_price = get_user_input()
@@ -77,6 +91,11 @@ def main():
     # print(price_match(listings[1], 50.00)) # False
     # print("Testing print_listing, expected output: Listing Details: Title: Wireless Mouse, Price: $15.99, Shipping: $5.00, Condition: New")
     # print_listing(listings[0])
+
+    few_cheapest_listings = get_n_cheapest_listings(listings, search_words, max_price)
+    print("\n Cheapest Listings:")
+    for listing in few_cheapest_listings:
+        print_listing(listing)
 
 
 main() 
