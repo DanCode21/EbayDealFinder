@@ -41,18 +41,13 @@ def print_listing(listing):
 
 def get_cheapest_listing(listings, search_words, max_price):
     cheapest_price = float('inf') # set cheapest price to infinity
-    print(f"Set cheaptest price to {cheapest_price}")
     cheapest_listing = None # no cheapest listing initially
-    print(f"Set cheapest listing to {cheapest_listing}")
-    print("STARTING LOOP")
     for listing in listings:   # go through each listing, match search? yes -> match price? yes -> 
         print(f"Checking listing: {listing['title']} with price ${listing['price']:.2f} and shipping ${listing['shipping']:.2f}")  # Debug print
         if(search_match(listing, search_words) and price_match(listing, max_price)):
             if calculate_total(listing) < cheapest_price:
                 cheapest_price = calculate_total(listing) #lower than cheapest price? -> update cheapest price
                 cheapest_listing = listing        # and cheapest listing
-            
-    print("DEBUG cheapest_listing =", cheapest_listing)
     return cheapest_listing
 
 def get_n_cheapest_listings(listings, search_words, max_price, n=None):
