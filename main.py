@@ -55,9 +55,6 @@ def get_n_cheapest_listings(listings, search_words, max_price, n=None):
     sorted_listings = sorted(valid_listings, key=calculate_total)
     return sorted_listings[:n]
 
-def ignore_broken(listings):
-    return [listing for listing in listings if listing.get('title') and listing.get('price') is not None]
-
 def main():
     search_query, search_words, max_price, n = get_user_input()
     
