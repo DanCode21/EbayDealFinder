@@ -61,8 +61,8 @@ def get_average_price(listings, search_words, max_price):
         if search_match(listing, search_words) and price_match(listing, max_price):
             total_price += calculate_total(listing)
             count += 1
-    get_average_price =  total_price / count if count > 0 else 0
-    return get_average_price
+    average_price =  total_price / count if count > 0 else 0
+    return average_price
 
 def get_deal_score(listing, average_price):
     score = 100
