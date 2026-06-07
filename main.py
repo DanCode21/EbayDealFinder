@@ -1,5 +1,4 @@
 import json
-
 from ebay_api import search_items
 
 # User input for search query and maximum price
@@ -77,29 +76,24 @@ def get_deal_score(listing, average_price):
         score += 20 # add points for new condition
     elif listing['condition'].lower() == 'for parts or not working':
         score -= 70 # Subtract points for poor condition
-    if score < 0:
-        score = 0
 
     # Shipping Cost Missing Penalty
     if listing['shipping'] == 0:
         score -= 10
 
+    # Score Floor
+    if score < 0:
+        score = 0
     listing ['deal_score'] = score
     return score
 
 def get_deal_scores(listings, search_words, max_price):
-    score = 100; # initial score
-    average_price = get_average_price(listings, search_words, max_price) # calculate average price of valid listings
-    for listing in listings:
-        if listing['condition'].lower() == 'new':
-            score += 10 # add points for new condition
-        if listing['condition'].lower() == 'For parts or not working':
-            score -= 70 # Subtract points for poor condition
-        
-        
-    
-
-
+    valid_listings = [listing for listing in listings if search_match(listing, search_words) and price_match(listing, max_price)]
+    average_price=get_average_price(valid_listings, search_words, max_price)
+    for listing in valid_listings:
+        get_deal_score(listing, average_price) 
+    sorted_listings = sorted(valid_listings, key=lambda x: x['deal_score'], reverse=True)
+    return sorted_listings
 
 def main():
     search_query, search_words, max_price, n = get_user_input()
@@ -133,6 +127,18 @@ def main():
     print("\n Cheapest Listings:")
     for listing in few_cheapest_listings:
         print_listing(listing)
+
+    print("\n Best Deals :")
+    number_of_deals_to_show = user_input = input("How many best deals do you want to see? ")
+    try:
+        number_of_deals_to_show = int(number_of_deals_to_show)
+    except ValueError:
+        print("Invalid input for number of deals, showing all deals instead.")
+        number_of_deals_to_show = None
+    best_deals = get_deal_scores(listings, search_words, max_price)
+    for listing in best_deals[:number_of_deals_to_show]:
+        print_listing(listing)
+        print(f"Deal Score: {listing['deal_score']:.2f}")
 
 
 main() 
