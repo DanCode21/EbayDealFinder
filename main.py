@@ -43,7 +43,6 @@ def get_cheapest_listing(listings, search_words, max_price):
     cheapest_price = float('inf') # set cheapest price to infinity
     cheapest_listing = None # no cheapest listing initially
     for listing in listings:   # go through each listing, match search? yes -> match price? yes -> 
-        print(f"Checking listing: {listing['title']} with price ${listing['price']:.2f} and shipping ${listing['shipping']:.2f}")  # Debug print
         if(search_match(listing, search_words) and price_match(listing, max_price)):
             if calculate_total(listing) < cheapest_price:
                 cheapest_price = calculate_total(listing) #lower than cheapest price? -> update cheapest price
@@ -54,6 +53,53 @@ def get_n_cheapest_listings(listings, search_words, max_price, n=None):
     valid_listings = [listing for listing in listings if search_match(listing, search_words) and price_match(listing, max_price)]
     sorted_listings = sorted(valid_listings, key=calculate_total)
     return sorted_listings[:n]
+
+def get_average_price(listings, search_words, max_price):
+    total_price = 0
+    count = 0
+    for listing in listings:
+        if search_match(listing, search_words) and price_match(listing, max_price):
+            total_price += calculate_total(listing)
+            count += 1
+    get_average_price =  total_price / count if count > 0 else 0
+    return get_average_price
+
+def get_deal_score(listing, average_price):
+    score = 100
+
+     # Calculate deal score based on price difference from average price, 1 Percent cheaper ->  + 1point 
+    total_price = calculate_total(listing)
+    # Calculate Avg Price of valid listings to compare against
+    score += 100 *(1 - (total_price / average_price)) if average_price > 0 else 0
+
+    # Condition score
+    if listing['condition'].lower() == 'new':
+        score += 20 # add points for new condition
+    elif listing['condition'].lower() == 'for parts or not working':
+        score -= 70 # Subtract points for poor condition
+    if score < 0:
+        score = 0
+
+    # Shipping Cost Missing Penalty
+    if listing['shipping'] == 0:
+        score -= 10
+
+    listing ['deal_score'] = score
+    return score
+
+def get_deal_scores(listings, search_words, max_price):
+    score = 100; # initial score
+    average_price = get_average_price(listings, search_words, max_price) # calculate average price of valid listings
+    for listing in listings:
+        if listing['condition'].lower() == 'new':
+            score += 10 # add points for new condition
+        if listing['condition'].lower() == 'For parts or not working':
+            score -= 70 # Subtract points for poor condition
+        
+        
+    
+
+
 
 def main():
     search_query, search_words, max_price, n = get_user_input()
