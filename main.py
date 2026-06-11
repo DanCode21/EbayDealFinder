@@ -115,16 +115,6 @@ def main():
     print_listing(cheapest_listing)
     if cheapest_listing is not None:
         print(f"Cheapest listing found: {cheapest_listing['title']} \nTotal: ${calculate_total(cheapest_listing):.2f}")  # Debug print to show the cheapest listing found
-    # print("Testing calculate_total, expected output: 20.99")
-    # print(calculate_total(listings[0]))  # Should return 20.99
-    # print("Testing search_match, expected output: True")
-    # print(search_match(listings[0], [" mouse"])) # Should return True
-    # print("Testing price_match, expected output: True")
-    # print(price_match(listings[0], 20.00)) # True
-    # print("Testing price_match, expected output: False")
-    # print(price_match(listings[1], 50.00)) # False
-    # print("Testing print_listing, expected output: Listing Details: Title: Wireless Mouse, Price: $15.99, Shipping: $5.00, Condition: New")
-    # print_listing(listings[0])
 
     few_cheapest_listings = get_n_cheapest_listings(listings, search_words, max_price, n)
     print("\n Cheapest Listings:")
@@ -143,5 +133,5 @@ def main():
         print_listing(listing)
         print(f"Deal Score: {listing['deal_score']:.2f}")
 
-
-main() 
+if __name__ == "__main__":
+    main()
