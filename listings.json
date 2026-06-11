@@ -3,5 +3,10 @@
     {"title": "Bluetooth Headphones", "price": 45.00, "shipping": 10.00, "condition": "New"},
     {"title": "GPU RTX 4090", "price": 1100.99, "shipping": 2.00, "condition": "New"},
     {"title": "GPU Nvidia RTX 3070", "price": 499.99, "shipping": 12.00, "condition": "New"},
-    {"title": "GPU amd rx6700xt", "price": 300.00, "shipping": 20.00, "condition": "New"}
+    {"title": "GPU amd rx6700xt", "price": 300.00, "shipping": 20.00, "condition": "New"},
+    {"title": "GPU Nvidia RTX 3070 Sticker", "price": 49.99, "shipping": 12.00, "condition": "New"},
+    {"title": "GPU Nvidia RTX 3070", "price": 359.99, "shipping": 20.00, "condition": "Used"},
+    {"title": "GPU Nvidia RTX 3070", "price": 299.99, "shipping": 15.00, "condition": "Used"},
+    {"title": "GPU Nvidia RTX 3070", "price": 250.00, "shipping": 10.00, "condition": "Used"},
+    {"title": "GPU Nvidia RTX 3070", "price": 199.99, "shipping": 5.00, "condition": "Used"}
 ]

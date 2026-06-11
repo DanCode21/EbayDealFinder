@@ -34,7 +34,7 @@ def print_listing(listing):
     if listing is None:
         print("No valid listing to print.")
         return
-    print(f"\nListing Details: Title: {listing['title']} \nPrice: ${ str(listing['price']) + " CAD "} \nShipping: ${listing['shipping']:.2f} \nCondition: {listing['condition']}")
+    print(f"\nListing Details: Title: {listing['title']} \nPrice: ${listing['price']:.2f} CAD \nShipping: ${listing['shipping']:.2f} \nCondition: {listing['condition']}")
     if listing.get("url"):
         print(f"URL: {listing['url']}")
 
@@ -65,7 +65,7 @@ def get_average_price(listings, search_words, max_price):
 
 def get_deal_score(listing, average_price):
     score = 100
-
+    
      # Calculate deal score based on price difference from average price, 1 Percent cheaper ->  + 1point 
     total_price = calculate_total(listing)
     # Calculate Avg Price of valid listings to compare against
@@ -91,7 +91,10 @@ def get_deal_scores(listings, search_words, max_price):
     valid_listings = [listing for listing in listings if search_match(listing, search_words) and price_match(listing, max_price)]
     average_price=get_average_price(valid_listings, search_words, max_price)
     for listing in valid_listings:
-        get_deal_score(listing, average_price) 
+        if listing['price'] < average_price * 0.3:  # Skip listings that are significantly cheaper than average
+            listing['deal_score'] = 0
+        else:
+            get_deal_score(listing, average_price)
     sorted_listings = sorted(valid_listings, key=lambda x: x['deal_score'], reverse=True)
     return sorted_listings
 
