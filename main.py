@@ -1,5 +1,6 @@
 import json
 from ebay_api import search_items
+from database import create_table, save_listing, get_listings
 
 # User input for search query and maximum price
 def get_user_input():
@@ -48,7 +49,7 @@ def get_cheapest_listing(listings, search_words, max_price):
                 cheapest_listing = listing        # and cheapest listing
     return cheapest_listing
 
-def get_n_cheapest_listings(listings, search_words, max_price, n=None):
+def get_n_cheapest_listings(listings, search_words, max_price, n):
     valid_listings = [listing for listing in listings if search_match(listing, search_words) and price_match(listing, max_price)]
     sorted_listings = sorted(valid_listings, key=calculate_total)
     return sorted_listings[:n]
@@ -120,6 +121,10 @@ def main():
     print("\n Cheapest Listings:")
     for listing in few_cheapest_listings:
         print_listing(listing)
+
+    print("\n Average Price:")
+    average_price = get_average_price(listings, search_words, max_price)
+    print(f"Average Price: ${average_price:.2f}")
 
     print("\n Best Deals :")
     number_of_deals_to_show = user_input = input("How many best deals do you want to see? ")
