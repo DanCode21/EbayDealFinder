@@ -3,6 +3,7 @@ from datetime import datetime
 
 def create_table():
     conn = sqlite3.connect("deals.db")
+    conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS listings (
@@ -26,6 +27,7 @@ def create_table():
 
 def save_listing(listing):
     conn = sqlite3.connect("deals.db")
+    conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     timestamp = datetime.now().isoformat()
     cursor.execute("""
@@ -50,8 +52,9 @@ def save_listing(listing):
 
 def get_listings():
     conn = sqlite3.connect("deals.db")
+    conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM listings")
     listings = cursor.fetchall()
     conn.close()
-    return listings
+    return [dict(row) for row in listings]

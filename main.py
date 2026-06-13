@@ -88,7 +88,7 @@ def get_deal_score(listing, average_price, average_shipping):
         total_price = listing['price'] + average_shipping # If shipping is missing, consider only the item price
     else:
          total_price = calculate_total(listing)
-         
+
     # Calculate deal score based on price difference from average price, 1 Percent cheaper ->  + 1point 
     # ALL COST CALCULATIONS MUST BE DONE BEFORE THIS STEP, otherwise we will be comparing the wrong price to the average price and giving inaccurate deal scores
     # Calculate Avg Price of valid listings to compare against
@@ -121,9 +121,11 @@ def main():
         print(f"Loaded {len(listings)} live listings from eBay.")
     except Exception as error:
         print(f"Could not load live eBay listings: {error}")
-        print("Using local listings.json sample data instead.")
-        with open("listings.json", 'r') as file:
-            listings = json.load(file)
+        print("Using local listings from the database instead.")
+        listings = get_listings()  # Load listings from the database instead of the JSON file
+        if not listings:
+            print("No listings found in the database. Please run the program with a valid eBay API key to fetch live listings.")
+            return
 
     cheapest_listing = get_cheapest_listing(listings, search_words, max_price)  # Should find the GPU listing
     print_listing(cheapest_listing)

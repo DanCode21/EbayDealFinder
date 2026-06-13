@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>eBay Deal Finder</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 2rem;
+      margin-bottom: 2rem;
+      color: #f8fafc;
+    }
+
+    .search-card {
+      max-width: 700px;
+      margin: 0 auto 2rem;
+      background: #1e2130;
+      border-radius: 12px;
+      padding: 1.5rem;
+      display: grid;
+      gap: 1rem;
+    }
+
+    .row { display: flex; gap: 1rem; }
+    .row > * { flex: 1; }
+
+    label { display: block; font-size: 0.8rem; color: #94a3b8; margin-bottom: 0.3rem; }
+
+    input {
+      width: 100%;
+      padding: 0.6rem 0.8rem;
+      background: #0f1117;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      color: #f8fafc;
+      font-size: 1rem;
+    }
+
+    input:focus { outline: none; border-color: #3b82f6; }
+
+    button {
+      width: 100%;
+      padding: 0.75rem;
+      background: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.2s;
+    }
+
+    button:hover { background: #2563eb; }
+    button:disabled { background: #334155; cursor: default; }
+
+    .stats {
+      max-width: 700px;
+      margin: 0 auto 2rem;
+      display: flex;
+      gap: 1rem;
+    }
+
+    .stat {
+      flex: 1;
+      background: #1e2130;
+      border-radius: 12px;
+      padding: 1rem;
+      text-align: center;
+    }
+
+    .stat .label { font-size: 0.8rem; color: #94a3b8; }
+    .stat .value { font-size: 1.5rem; font-weight: 700; color: #f8fafc; margin-top: 0.2rem; }
+
+    .section {
+      max-width: 700px;
+      margin: 0 auto 2rem;
+    }
+
+    .section h2 {
+      font-size: 1.1rem;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.75rem;
+    }
+
+    .listing-card {
+      background: #1e2130;
+      border-radius: 10px;
+      padding: 1rem;
+      margin-bottom: 0.75rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+
+    .listing-card .info { flex: 1; min-width: 0; }
+
+    .listing-card .title {
+      font-weight: 600;
+      color: #f8fafc;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .listing-card .meta {
+      font-size: 0.85rem;
+      color: #94a3b8;
+      margin-top: 0.3rem;
+    }
+
+    .listing-card .right {
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .listing-card .total {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #f8fafc;
+    }
+
+    .listing-card .score {
+      font-size: 0.85rem;
+      color: #3b82f6;
+      margin-top: 0.2rem;
+    }
+
+    .listing-card a {
+      display: inline-block;
+      margin-top: 0.5rem;
+      font-size: 0.8rem;
+      color: #3b82f6;
+      text-decoration: none;
+    }
+
+    .listing-card a:hover { text-decoration: underline; }
+
+    .badge {
+      display: inline-block;
+      padding: 0.15rem 0.5rem;
+      border-radius: 99px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      background: #0f4c81;
+      color: #93c5fd;
+      margin-left: 0.4rem;
+    }
+
+    .error {
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 1rem;
+      background: #450a0a;
+      border-radius: 10px;
+      color: #fca5a5;
+    }
+
+    #results { display: none; }
+    #spinner { display: none; text-align: center; color: #94a3b8; padding: 2rem; }
+  </style>
+</head>
+<body>
+  <h1>eBay Deal Finder</h1>
+
+  <div class="search-card">
+    <div>
+      <label for="query">Search</label>
+      <input id="query" type="text" placeholder="e.g. MacBook Air M2" />
+    </div>
+    <div class="row">
+      <div>
+        <label for="max_price">Max Price (CAD)</label>
+        <input id="max_price" type="number" value="500" min="0" />
+      </div>
+      <div>
+        <label for="n_deals">Best deals to show</label>
+        <input id="n_deals" type="number" value="5" min="1" max="20" />
+      </div>
+      <div>
+        <label for="n_cheapest">Cheapest to show</label>
+        <input id="n_cheapest" type="number" value="5" min="1" max="20" />
+      </div>
+    </div>
+    <button id="search-btn" onclick="runSearch()">Search eBay</button>
+  </div>
+
+  <div id="spinner">Searching eBay...</div>
+  <div id="error-box" class="error" style="display:none"></div>
+
+  <div id="results">
+    <div class="stats">
+      <div class="stat">
+        <div class="label">Average Price</div>
+        <div class="value" id="avg-price"></div>
+      </div>
+      <div class="stat">
+        <div class="label">Average Shipping</div>
+        <div class="value" id="avg-shipping"></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Best Deals</h2>
+      <div id="best-deals-list"></div>
+    </div>
+
+    <div class="section">
+      <h2>Cheapest Listings</h2>
+      <div id="cheapest-list"></div>
+    </div>
+  </div>
+
+  <script>
+    async function runSearch() {
+      const query = document.getElementById("query").value.trim();
+      if (!query) return;
+
+      const btn = document.getElementById("search-btn");
+      btn.disabled = true;
+      btn.textContent = "Searching...";
+      document.getElementById("results").style.display = "none";
+      document.getElementById("error-box").style.display = "none";
+      document.getElementById("spinner").style.display = "block";
+
+      try {
+        const res = await fetch("/search", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            query,
+            max_price: document.getElementById("max_price").value,
+            n_deals: document.getElementById("n_deals").value,
+            n_cheapest: document.getElementById("n_cheapest").value,
+          }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          showError(data.error || "Something went wrong.");
+          return;
+        }
+
+        document.getElementById("avg-price").textContent = `$${data.average_price.toFixed(2)}`;
+        document.getElementById("avg-shipping").textContent = `$${data.average_shipping.toFixed(2)}`;
+
+        document.getElementById("best-deals-list").innerHTML = data.best_deals.map(listingCard).join("");
+        document.getElementById("cheapest-list").innerHTML = data.cheapest.map(listingCard).join("");
+
+        document.getElementById("results").style.display = "block";
+      } catch (err) {
+        showError("Could not reach the server.");
+      } finally {
+        document.getElementById("spinner").style.display = "none";
+        btn.disabled = false;
+        btn.textContent = "Search eBay";
+      }
+    }
+
+    function listingCard(l) {
+      const score = l.deal_score != null
+        ? `<div class="score">Deal Score: ${l.deal_score}</div>`
+        : "";
+      const link = l.url
+        ? `<a href="${l.url}" target="_blank">View on eBay</a>`
+        : "";
+      return `
+        <div class="listing-card">
+          <div class="info">
+            <div class="title">${l.title}</div>
+            <div class="meta">
+              Price $${l.price.toFixed(2)} &nbsp;·&nbsp; Shipping $${l.shipping.toFixed(2)}
+              <span class="badge">${l.condition}</span>
+            </div>
+            ${link}
+          </div>
+          <div class="right">
+            <div class="total">$${l.total.toFixed(2)}</div>
+            ${score}
+          </div>
+        </div>`;
+    }
+
+    function showError(msg) {
+      const box = document.getElementById("error-box");
+      box.textContent = msg;
+      box.style.display = "block";
+    }
+
+    document.getElementById("query").addEventListener("keydown", e => {
+      if (e.key === "Enter") runSearch();
+    });
+  </script>
+</body>
+</html>
