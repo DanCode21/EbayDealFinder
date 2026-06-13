@@ -226,7 +226,7 @@ class EbayClient:
             cost
             for cost in (
                 Money.from_api(option.get("shippingCost"))
-                for option in shipping_options
+                for option in shipping_options if option.get("type") != "LOCAL_PICKUP"
             )
             if cost is not None
         ]

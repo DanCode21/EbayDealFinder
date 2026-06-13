@@ -68,19 +68,14 @@ def get_average_shipping(listings, search_words, max_price):
     total_shipping = 0
     count = 0
     for listing in listings:
-        if search_match(listing, search_words) and price_match(listing, max_price):
+        if search_match(listing, search_words) and price_match(listing, max_price) and listing['shipping'] > 0: # Only consider listings with valid shipping costs for average shipping calculation
             total_shipping += listing['shipping']
             count += 1
     average_shipping = total_shipping / count if count > 0 else 0
     return average_shipping
 
-def get_deal_score(listing, average_price):
+def get_deal_score(listing, average_price, average_shipping):
     score = 100
-    
-     # Calculate deal score based on price difference from average price, 1 Percent cheaper ->  + 1point 
-    total_price = calculate_total(listing)
-    # Calculate Avg Price of valid listings to compare against
-    score += 100 *(1 - (total_price / average_price)) if average_price > 0 else 0
 
     # Condition score
     if listing['condition'].lower() == 'new':
@@ -88,11 +83,19 @@ def get_deal_score(listing, average_price):
     elif listing['condition'].lower() == 'for parts or not working':
         score -= 70 # Subtract points for poor condition
 
-    # Shipping Cost Missing Penalty
+    # If Shipping is missing, use average shipping cost to calculate total price for deal score
     if listing['shipping'] == 0:
-        score -= 10
+        total_price = listing['price'] + average_shipping # If shipping is missing, consider only the item price
+    else:
+         total_price = calculate_total(listing)
+         
+    # Calculate deal score based on price difference from average price, 1 Percent cheaper ->  + 1point 
+    # ALL COST CALCULATIONS MUST BE DONE BEFORE THIS STEP, otherwise we will be comparing the wrong price to the average price and giving inaccurate deal scores
+    # Calculate Avg Price of valid listings to compare against
+    score += 100 *(1 - (total_price / average_price)) if average_price > 0 else 0
 
-    # Score Floor
+
+    # Score Floor & return result
     if score < 0:
         score = 0
     listing ['deal_score'] = score
@@ -101,17 +104,17 @@ def get_deal_score(listing, average_price):
 def get_deal_scores(listings, search_words, max_price):
     valid_listings = [listing for listing in listings if search_match(listing, search_words) and price_match(listing, max_price)]
     average_price=get_average_price(valid_listings, search_words, max_price)
+    average_shipping=get_average_shipping(valid_listings, search_words, max_price)
     for listing in valid_listings:
         if listing['price'] < average_price * 0.3:  # Skip listings that are significantly cheaper than average
             listing['deal_score'] = 0
         else:
-            get_deal_score(listing, average_price)
+            get_deal_score(listing, average_price, average_shipping)
     sorted_listings = sorted(valid_listings, key=lambda x: x['deal_score'], reverse=True)
     return sorted_listings
 
 def main():
     search_query, search_words, max_price, n = get_user_input()
-    
     create_table()  # Ensure the database table exists
     try:
         listings = search_items(search_query)
@@ -135,6 +138,9 @@ def main():
     print("\n Average Price:")
     average_price = get_average_price(listings, search_words, max_price)
     print(f"Average Price: ${average_price:.2f}")
+    print("\n Average Shipping:")
+    average_shipping=get_average_shipping(listings, search_words, max_price)
+    print(f"Average Shipping: ${average_shipping:.2f}")
 
     print("\n Best Deals :")
     number_of_deals_to_show = user_input = input("How many best deals do you want to see? ")
@@ -147,6 +153,7 @@ def main():
     for listing in best_deals[:number_of_deals_to_show]:
         print_listing(listing)
         print(f"Deal Score: {listing['deal_score']:.2f}")
+        save_listing(listing)  # Save the listing to the database
 
 if __name__ == "__main__":
     main()
