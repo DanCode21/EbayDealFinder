@@ -64,6 +64,16 @@ def get_average_price(listings, search_words, max_price):
     average_price =  total_price / count if count > 0 else 0
     return average_price
 
+def get_average_shipping(listings, search_words, max_price):
+    total_shipping = 0
+    count = 0
+    for listing in listings:
+        if search_match(listing, search_words) and price_match(listing, max_price):
+            total_shipping += listing['shipping']
+            count += 1
+    average_shipping = total_shipping / count if count > 0 else 0
+    return average_shipping
+
 def get_deal_score(listing, average_price):
     score = 100
     
@@ -102,7 +112,7 @@ def get_deal_scores(listings, search_words, max_price):
 def main():
     search_query, search_words, max_price, n = get_user_input()
     
-
+    create_table()  # Ensure the database table exists
     try:
         listings = search_items(search_query)
         print(f"Loaded {len(listings)} live listings from eBay.")

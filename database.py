@@ -1,6 +1,5 @@
 import sqlite3
 from datetime import datetime
-timestamp = datetime.now().isoformat()
 
 def create_table():
     conn = sqlite3.connect("deals.db")
@@ -26,8 +25,33 @@ def create_table():
     conn.close()
 
 def save_listing(listing):
-
-
-
+    conn = sqlite3.connect("deals.db")
+    cursor = conn.cursor()
+    timestamp = datetime.now().isoformat()
+    cursor.execute("""
+        INSERT INTO listings (item_id, title, price, price_currency, shipping, shipping_currency, condition, url, image_url, seller_username, location_country, timestamp)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        listing.get('item_id'),
+        listing.get('title'),
+        listing.get('price'),
+        listing.get('price_currency'),
+        listing.get('shipping'),
+        listing.get('shipping_currency'),
+        listing.get('condition'),
+        listing.get('url'),
+        listing.get('image_url'),
+        listing.get('seller_username'),
+        listing.get('location_country'),
+        timestamp
+    ))
+    conn.commit()
+    conn.close()
 
 def get_listings():
+    conn = sqlite3.connect("deals.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM listings")
+    listings = cursor.fetchall()
+    conn.close()
+    return listings
