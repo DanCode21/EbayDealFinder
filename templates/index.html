@@ -37,7 +37,7 @@
 
     label { display: block; font-size: 0.8rem; color: #94a3b8; margin-bottom: 0.3rem; }
 
-    input {
+    input, select {
       width: 100%;
       padding: 0.6rem 0.8rem;
       background: #0f1117;
@@ -47,7 +47,7 @@
       font-size: 1rem;
     }
 
-    input:focus { outline: none; border-color: #3b82f6; }
+    input:focus, select:focus { outline: none; border-color: #3b82f6; }
 
     button {
       width: 100%;
@@ -182,6 +182,12 @@
       <label for="query">Search</label>
       <input id="query" type="text" placeholder="e.g. MacBook Air M2" />
     </div>
+    <div>
+      <label for="category">Category</label>
+      <select id="category">
+        <option value="">All categories</option>
+      </select>
+    </div>
     <div class="row">
       <div>
         <label for="max_price">Max Price (CAD)</label>
@@ -226,9 +232,45 @@
   </div>
 
   <script>
+    let categoriesQuery = null;
+    let categoriesPromise = null;
+
+    document.getElementById("query").addEventListener("change", loadCategories);
+
+    // Reuses the pending request when the query hasn't changed, so clicking
+    // Search right after typing waits for the suggestions instead of skipping them.
+    function loadCategories() {
+      const query = document.getElementById("query").value.trim();
+      if (query !== categoriesQuery) {
+        categoriesQuery = query;
+        categoriesPromise = fetchCategories(query);
+      }
+      return categoriesPromise;
+    }
+
+    async function fetchCategories(query) {
+      const select = document.getElementById("category");
+      select.innerHTML = '<option value="">All categories</option>';
+      if (!query) return;
+      try {
+        const res = await fetch("/categories?q=" + encodeURIComponent(query));
+        const categories = await res.json();
+        for (const cat of categories) {
+          const option = document.createElement("option");
+          option.value = cat.id;
+          option.textContent = cat.name;
+          select.appendChild(option);
+        }
+        if (categories.length) select.value = categories[0].id;
+      } catch {
+        // Server unreachable: leave it on "All categories"
+      }
+    }
+
     async function runSearch() {
       const query = document.getElementById("query").value.trim();
       if (!query) return;
+      await loadCategories();
 
       const btn = document.getElementById("search-btn");
       btn.disabled = true;
@@ -243,6 +285,7 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             query,
+            category_id: document.getElementById("category").value,
             max_price: document.getElementById("max_price").value,
             n_deals: document.getElementById("n_deals").value,
             n_cheapest: document.getElementById("n_cheapest").value,

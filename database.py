@@ -8,7 +8,7 @@ def create_table():
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS listings (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            item_id TEXT,
+            item_id TEXT UNIQUE,
             title TEXT,
             price REAL,
             price_currency TEXT,
@@ -31,7 +31,7 @@ def save_listing(listing):
     cursor = conn.cursor()
     timestamp = datetime.now().isoformat()
     cursor.execute("""
-        INSERT INTO listings (item_id, title, price, price_currency, shipping, shipping_currency, condition, url, image_url, seller_username, location_country, timestamp)
+        INSERT OR REPLACE INTO listings (item_id, title, price, price_currency, shipping, shipping_currency, condition, url, image_url, seller_username, location_country, timestamp)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         listing.get('item_id'),

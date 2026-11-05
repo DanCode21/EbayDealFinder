@@ -13,6 +13,8 @@ from urllib.request import Request, urlopen
 PRODUCTION_BASE_URL = "https://api.ebay.com"
 DEFAULT_SCOPE = "https://api.ebay.com/oauth/api_scope"
 DEFAULT_MARKETPLACE_ID = "EBAY_CA"
+_category_tree_ids: dict[str, str] = {}
+
 
 
 class EbayApiError(Exception):
@@ -114,17 +116,38 @@ class EbayClient:
     def from_env(cls, env_path: str | Path = ".env") -> "EbayClient":
         return cls(EbayConfig.from_env(env_path))
 
-    def search_items(self, query: str, limit: int = 50) -> list[EbayListing]:
+    def get_category_suggestions(self, query: str, limit: int = 5) -> list[dict[str, str]]:
+        tree_id = _category_tree_ids.get(self.config.marketplace_id)
+        if tree_id is None:
+            data = self._request_json(
+                "GET",
+                "/commerce/taxonomy/v1/get_default_category_tree_id",
+                params={"marketplace_id": self.config.marketplace_id},
+            )
+            tree_id = _category_tree_ids[self.config.marketplace_id] = data["categoryTreeId"]
+
+        data = self._request_json(
+            "GET",
+            f"/commerce/taxonomy/v1/category_tree/{tree_id}/get_category_suggestions",
+            params={"q": query},
+        )
+        return [
+            {"id": s["category"]["categoryId"], "name": s["category"]["categoryName"]}
+            for s in data.get("categorySuggestions", [])[:limit]
+        ]
+
+    
+    def search_items(self, query: str, limit: int = 50, category_id: str | None = None) -> list[EbayListing]:
         if not query.strip():
             raise ValueError("Search query cannot be empty.")
         if not 1 <= limit <= 200:
             raise ValueError("limit must be between 1 and 200.")
 
-        data = self._request_json(
-            "GET",
-            "/buy/browse/v1/item_summary/search",
-            params={"q": query, "limit": str(limit)},
-        )
+        params = {"q": query, "limit": str(limit)}
+        if category_id:
+            params["category_ids"] = category_id
+
+        data = self._request_json("GET", "/buy/browse/v1/item_summary/search", params=params)
 
         return [
             self._parse_listing(item)
@@ -249,16 +272,18 @@ def load_dotenv(path: str | Path = ".env") -> None:
         os.environ.setdefault(key.strip(), _clean_env_value(value))
 
 
-def search_items(query: str, limit: int = 50) -> list[dict[str, Any]]:
-    """Compatibility helper for the current CLI code."""
-    return [
-        listing.to_legacy_dict()
-        for listing in EbayClient.from_env().search_items(query, limit=limit)
-    ]
-
-
 def _clean_env_value(value: str) -> str:
     cleaned = value.strip().strip('"').strip("'")
     if " #" in cleaned:
         cleaned = cleaned.split(" #", 1)[0].strip()
     return cleaned
+
+def get_category_suggestions(query: str) -> list[dict[str, str]]:
+    return EbayClient.from_env().get_category_suggestions(query)
+
+def search_items(query: str, limit: int = 50, category_id: str | None = None) -> list[dict[str, Any]]:
+    """Compatibility helper for the current CLI code."""
+    return [
+        listing.to_legacy_dict()
+        for listing in EbayClient.from_env().search_items(query, limit=limit, category_id=category_id)
+    ]

@@ -18,6 +18,7 @@ def get_user_input():
         except ValueError:
             print("Please enter a valid number for the number of listings.")
     search_words = search_query.lower().split()
+    search_query = normalize_query(search_query)
     return search_query, search_words, max_price, n
 
 def calculate_total(listing):
@@ -54,21 +55,21 @@ def get_n_cheapest_listings(listings, search_words, max_price, n):
     sorted_listings = sorted(valid_listings, key=calculate_total)
     return sorted_listings[:n]
 
-def get_average_price(listings, search_words, max_price):
+def get_average_price(listings, search_words):
     total_price = 0
     count = 0
     for listing in listings:
-        if search_match(listing, search_words) and price_match(listing, max_price):
+        if search_match(listing, search_words):
             total_price += calculate_total(listing)
             count += 1
     average_price =  total_price / count if count > 0 else 0
     return average_price
 
-def get_average_shipping(listings, search_words, max_price):
+def get_average_shipping(listings, search_words):
     total_shipping = 0
     count = 0
     for listing in listings:
-        if search_match(listing, search_words) and price_match(listing, max_price) and listing['shipping'] > 0: # Only consider listings with valid shipping costs for average shipping calculation
+        if search_match(listing, search_words) and listing['shipping'] > 0: # Only consider listings with valid shipping costs for average shipping calculation
             total_shipping += listing['shipping']
             count += 1
     average_shipping = total_shipping / count if count > 0 else 0
@@ -102,9 +103,10 @@ def get_deal_score(listing, average_price, average_shipping):
     return score
 
 def get_deal_scores(listings, search_words, max_price):
+    average_price=get_average_price(listings, search_words)
+    average_shipping=get_average_shipping(listings, search_words)
     valid_listings = [listing for listing in listings if search_match(listing, search_words) and price_match(listing, max_price)]
-    average_price=get_average_price(valid_listings, search_words, max_price)
-    average_shipping=get_average_shipping(valid_listings, search_words, max_price)
+    
     for listing in valid_listings:
         if listing['price'] < average_price * 0.3:  # Skip listings that are significantly cheaper than average
             listing['deal_score'] = 0
@@ -113,12 +115,18 @@ def get_deal_scores(listings, search_words, max_price):
     sorted_listings = sorted(valid_listings, key=lambda x: x['deal_score'], reverse=True)
     return sorted_listings
 
+def normalize_query(query):
+    words = query.lower().split()       
+    return " ".join(sorted(set(words))) 
+
 def main():
     search_query, search_words, max_price, n = get_user_input()
     create_table()  # Ensure the database table exists
     try:
         listings = search_items(search_query)
         print(f"Loaded {len(listings)} live listings from eBay.")
+        for listing in listings:
+            save_listing(listing)  # Save each listing to the database
     except Exception as error:
         print(f"Could not load live eBay listings: {error}")
         print("Using local listings from the database instead.")
@@ -126,6 +134,7 @@ def main():
         if not listings:
             print("No listings found in the database. Please run the program with a valid eBay API key to fetch live listings.")
             return
+    
 
     cheapest_listing = get_cheapest_listing(listings, search_words, max_price)  # Should find the GPU listing
     print_listing(cheapest_listing)
@@ -138,10 +147,10 @@ def main():
         print_listing(listing)
 
     print("\n Average Price:")
-    average_price = get_average_price(listings, search_words, max_price)
+    average_price = get_average_price(listings, search_words)
     print(f"Average Price: ${average_price:.2f}")
     print("\n Average Shipping:")
-    average_shipping=get_average_shipping(listings, search_words, max_price)
+    average_shipping=get_average_shipping(listings, search_words)
     print(f"Average Shipping: ${average_shipping:.2f}")
 
     print("\n Best Deals :")
@@ -155,7 +164,6 @@ def main():
     for listing in best_deals[:number_of_deals_to_show]:
         print_listing(listing)
         print(f"Deal Score: {listing['deal_score']:.2f}")
-        save_listing(listing)  # Save the listing to the database
-
+        
 if __name__ == "__main__":
     main()
