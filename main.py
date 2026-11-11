@@ -116,8 +116,10 @@ def get_deal_scores(listings, search_words, max_price):
     return sorted_listings
 
 def normalize_query(query):
-    words = query.lower().split()       
-    return " ".join(sorted(set(words))) 
+    # Lowercase and drop duplicate words, but keep the original word order:
+    # eBay's search and category suggestions depend on it ("17 iphone" -> cases).
+    words = query.lower().split()
+    return " ".join(dict.fromkeys(words))
 
 def main():
     search_query, search_words, max_price, n = get_user_input()

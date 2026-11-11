@@ -315,20 +315,41 @@
       }
     }
 
+    // Turns characters like < > " into harmless text so data from eBay
+    // can never be interpreted as HTML or script.
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    // Only allow real https links (blocks "javascript:..." style URLs).
+    function safeUrl(url) {
+      try {
+        return new URL(url).protocol === "https:" ? url : "";
+      } catch {
+        return "";
+      }
+    }
+
     function listingCard(l) {
       const score = l.deal_score != null
-        ? `<div class="score">Deal Score: ${l.deal_score}</div>`
+        ? `<div class="score">Deal Score: ${escapeHtml(l.deal_score)}</div>`
         : "";
-      const link = l.url
-        ? `<a href="${l.url}" target="_blank">View on eBay</a>`
+      const url = safeUrl(l.url);
+      const link = url
+        ? `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">View on eBay</a>`
         : "";
       return `
         <div class="listing-card">
           <div class="info">
-            <div class="title">${l.title}</div>
+            <div class="title">${escapeHtml(l.title)}</div>
             <div class="meta">
               Price $${l.price.toFixed(2)} &nbsp;·&nbsp; Shipping $${l.shipping.toFixed(2)}
-              <span class="badge">${l.condition}</span>
+              <span class="badge">${escapeHtml(l.condition)}</span>
             </div>
             ${link}
           </div>

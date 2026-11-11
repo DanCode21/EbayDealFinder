@@ -1,4 +1,6 @@
+import os
 from flask import Flask, render_template, request, jsonify
+from flask_limiter import Limiter
 from ebay_api import search_items
 from database import create_table, save_listing, get_listings
 from ebay_api import search_items, get_category_suggestions
@@ -13,12 +15,24 @@ from main import (
 
 app = Flask(__name__)
 
+def client_ip():
+    # Behind the Cloudflare Tunnel every request appears to come from 127.0.0.1,
+    # so use the real visitor IP that Cloudflare passes along.
+    return request.headers.get("CF-Connecting-IP") or request.remote_addr
+
+limiter = Limiter(
+    key_func=client_ip,
+    app=app,
+    default_limits=["200 per hour"],
+    storage_uri="memory://",
+)
 
 @app.route("/")
 def index():
     return render_template("index.html")
 
 @app.route("/categories")
+@limiter.limit("30 per minute")
 def categories():
     query = normalize_query(request.args.get("q") or "")
     if not query:
@@ -29,6 +43,7 @@ def categories():
         return jsonify([])  # eBay unreachable: dropdown stays at "All categories"
 
 @app.route("/search", methods=["POST"])
+@limiter.limit("10 per minute")
 def search():
     data = request.get_json()
     query = (data.get("query") or "").strip()
@@ -83,6 +98,10 @@ def search():
         "cheapest": [fmt(l) for l in cheapest],
     })
 
+@app.errorhandler(429)
+def too_many_requests(e):
+    return jsonify({"error": "Too many searches. Wait a minute and try again."}), 429
+
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="127.0.0.1", port=5000, debug=os.getenv("FLASK_DEBUG") == "1")
